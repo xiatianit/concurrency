@@ -1,4 +1,4 @@
-package com.example.demo.concurrency.atomic;
+package com.example.demo.lock;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -6,21 +6,23 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Created by xiatian on 2018/12/11.
  */
 @Slf4j
-public class AtomicBooleanTest {
+public class ReentrantLockExample {
 
     //请求总数
     public static int clientTotal = 5000;
     //同时并发执行的线程数
     public static int threadTotal = 200;
 
-    public static AtomicBoolean isHapplened = new AtomicBoolean(false);
+    public static int count = 0;
+
+    private final static Lock lock = new ReentrantLock();
 
     public static void main(String[] args) throws Exception {
 
@@ -31,7 +33,7 @@ public class AtomicBooleanTest {
             executorService.execute(() -> {
                 try {
                     semaphore.acquire();
-                    test();
+                    add();
                     semaphore.release();
                 } catch (InterruptedException e) {
                     log.error("exception", e);
@@ -41,15 +43,19 @@ public class AtomicBooleanTest {
         }
         countDownLatch.await();
         executorService.shutdown();
-        log.info("isHapplened:{}", isHapplened);
+        log.info("count:{}", count);
     }
 
 
-    private static void test() {
+    private static void add() {
 
-        if (isHapplened.compareAndSet(false, true)) {
-            log.info("执行方法-->execute");
+        lock.lock();
+        try {
+            count++;
+        } finally {
+            lock.unlock();
         }
+
     }
 
 
